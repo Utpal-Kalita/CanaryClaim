@@ -15,11 +15,15 @@
 # ============================================================
 
 import hashlib
+import logging
 import os
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Config
@@ -28,6 +32,7 @@ load_dotenv()
 
 MODEL_API_BASE = os.getenv("MODEL_API_BASE", "http://localhost:8080/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "mimo-m2.5")
+DEBUG = os.getenv("FLASK_DEBUG", "0") == "1"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "not-needed")
 
 CANARY = "ACME-RESTRICTED-7749"
@@ -129,6 +134,8 @@ call_model = call_model_openai
 # Flask app
 # ---------------------------------------------------------------------------
 app = Flask(__name__)
+# CORS: wildcard for dev convenience (localhost React on :3000 calling :5000).
+# Constrain origins or remove before exposing beyond local demo.
 CORS(app)
 
 
@@ -150,7 +157,8 @@ def chat():
         return jsonify({"reply": reply})
 
     except Exception as e:
-        return jsonify({"reply": f"Error: {str(e)}"}), 500
+        logger.exception("Model call failed")
+        return jsonify({"reply": "Error: model request failed"}), 500
 
 
 @app.route("/check", methods=["POST"])
@@ -198,4 +206,4 @@ if __name__ == "__main__":
     print('      context."')
     print()
     print("=" * 60)
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=DEBUG)
