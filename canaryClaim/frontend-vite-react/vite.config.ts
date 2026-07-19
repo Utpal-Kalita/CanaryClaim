@@ -37,6 +37,9 @@ export default defineConfig(({ mode }) => ({
   ],
   resolve: {
     alias: {
+      // Midnight's indexer client imports a named WebSocket export. The
+      // isomorphic-ws browser fallback only exposes a default export.
+      'isomorphic-ws': path.resolve(__dirname, './src/shims/isomorphic-ws.ts'),
       '@': path.resolve(__dirname, './src'),
       // Add any other aliases you need
     },
@@ -53,6 +56,9 @@ export default defineConfig(({ mode }) => ({
     ],
   },
   build: {
+    // Midnight's browser bundle contains top-level await that cannot be
+    // downlevelled by the plugin to Vite's legacy default targets.
+    target: 'esnext',
     commonjsOptions: {
       transformMixedEsModules: true,
     },
