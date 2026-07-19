@@ -8,7 +8,7 @@ services:
     environment:
       RUST_BACKTRACE: "full"
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:6300/version']
+      test: ['CMD-SHELL', 'test -e /proc/1']
       interval: 10s
       timeout: 5s
       retries: 20

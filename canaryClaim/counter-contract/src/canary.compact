@@ -1,0 +1,37 @@
+pragma language_version >= 0.20;
+
+import CompactStandardLibrary;
+
+// Public on-chain state.
+// canaryCommitment is set once at deploy and never changes (sealed).
+export sealed ledger canaryCommitment: Bytes<32>;
+export ledger claimed: Boolean;
+export ledger winner: Bytes<32>;
+
+// The leaked canary secret lives OFF-CHAIN in private state.
+// It is never written to the ledger — only a hash comparison is proven.
+witness secret(): Bytes<32>;
+
+constructor(commitment: Bytes<32>) {
+  canaryCommitment = disclose(commitment);
+}
+
+// Off-chain helper: compute the commitment for a given secret.
+// Never called in a transaction — used by deploy/tooling to derive the
+// commitment to store, using the exact same hash the claim proves against.
+export pure circuit commitmentOf(s: Bytes<32>): Bytes<32> {
+  return persistentHash<Bytes<32>>(s);
+}
+
+// Prove knowledge of the secret whose hash equals the stored commitment,
+// without revealing the secret. Only the match result and winner are disclosed.
+export circuit claim(): [] {
+  assert(!claimed, "Already claimed");
+  const h = persistentHash<Bytes<32>>(secret());
+  assert(disclose(h == canaryCommitment), "Wrong secret");
+  claimed = true;
+  winner = disclose(ownPublicKey().bytes);
+}
+
+// Bounty token transfer is intentionally omitted. A real payout needs a
+// funded contract and explicit Zswap token-transfer logic.

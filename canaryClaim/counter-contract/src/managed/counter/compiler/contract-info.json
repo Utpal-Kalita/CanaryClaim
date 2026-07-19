@@ -1,7 +1,24 @@
 {
   "circuits": [
     {
-      "name": "increment",
+      "name": "commitmentOf",
+      "pure": true,
+      "arguments": [
+        {
+          "name": "s",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "claim",
       "pure": false,
       "arguments": [
       ],
@@ -13,6 +30,15 @@
     }
   ],
   "witnesses": [
+    {
+      "name": "secret",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    }
   ],
   "contracts": [
   ]

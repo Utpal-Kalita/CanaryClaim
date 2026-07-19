@@ -14,4 +14,4 @@ if (result.status !== 0) {
 
 mkdirSync('dist', { recursive: true });
 cpSync('src/managed', 'dist/managed', { recursive: true });
-cpSync('src/counter.compact', 'dist/counter.compact');
+cpSync('src/canary.compact', 'dist/canary.compact');

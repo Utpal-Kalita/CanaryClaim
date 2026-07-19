@@ -5,13 +5,13 @@ import * as bip39 from '@scure/bip39';
 import { wordlist as english } from '@scure/bip39/wordlists/english.js';
 
 import {
-  CounterCircuits,
-  type CounterPrivateStateId,
-  type CounterProviders,
-  type DeployedCounterContract,
-} from './common-types';
-import { type Config, contractConfig } from './config';
-import { Counter, type CounterPrivateState } from '@eddalabs/counter-contract';
+  CanaryCircuits,
+  type CanaryPrivateStateId,
+  type CanaryProviders,
+  type DeployedCanaryContract,
+} from './common-types.js';
+import { type Config, contractConfig } from './config.js';
+import { Canary, type CanaryPrivateState, witnesses, createPrivateState } from '@eddalabs/counter-contract';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
 import * as ledger from '@midnight-ntwrk/ledger-v7';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
@@ -55,9 +55,10 @@ export function setLogger(_logger: Logger) {
   logger = _logger;
 }
 
-// Pre-compile the counter contract with ZK circuit assets
-const counterCompiledContract = CompiledContract.make('counter', Counter.Contract).pipe(
-  CompiledContract.withVacantWitnesses,
+// The existing managed/counter asset namespace is retained for the generated
+// canary ZK assets and Git LFS plumbing.
+const canaryCompiledContract = CompiledContract.make('counter', Canary.Contract).pipe(
+  CompiledContract.withWitnesses(witnesses),
   CompiledContract.withCompiledFileAssets(contractConfig.zkConfigPath),
 );
 
@@ -83,66 +84,69 @@ export const mnemonicToSeed = async (mnemonic: string): Promise<string> => {
   return Buffer.from(seed).subarray(0, 32).toString('hex');
 };
 
-export const getCounterLedgerState = async (
-  providers: CounterProviders,
+export const getCanaryLedgerState = async (
+  providers: CanaryProviders,
   contractAddress: ContractAddress,
-): Promise<bigint | null> => {
+): Promise<{ claimed: boolean; winner: Uint8Array; canaryCommitment: Uint8Array } | null> => {
   assertIsContractAddress(contractAddress);
   logger.info('Checking contract ledger state...');
   const state = await providers.publicDataProvider
     .queryContractState(contractAddress)
-    .then((contractState) => (contractState != null ? Counter.ledger(contractState.data).round : null));
-  logger.info(`Ledger state: ${state}`);
+    .then((contractState) => (contractState != null ? Canary.ledger(contractState.data) : null));
+  logger.info(`Ledger state: ${state ? JSON.stringify({ claimed: state.claimed }) : null}`);
   return state;
 };
 
 export const joinContract = async (
-  providers: CounterProviders,
+  providers: CanaryProviders,
   contractAddress: string,
-): Promise<DeployedCounterContract> => {
-  const counterContract = await findDeployedContract(providers, {
+  secret: Uint8Array,
+): Promise<DeployedCanaryContract> => {
+  const canaryContract = await findDeployedContract(providers, {
     contractAddress,
-    compiledContract: counterCompiledContract,
-    privateStateId: 'counterPrivateState',
-    initialPrivateState: { privateCounter: 0 },
+    compiledContract: canaryCompiledContract,
+    privateStateId: 'canaryPrivateState',
+    initialPrivateState: createPrivateState(secret),
   });
-  logger.info(`Joined contract at address: ${counterContract.deployTxData.public.contractAddress}`);
-  return counterContract;
+  logger.info(`Joined contract at address: ${canaryContract.deployTxData.public.contractAddress}`);
+  return canaryContract;
 };
 
 export const deploy = async (
-  providers: CounterProviders,
-  privateState: CounterPrivateState,
-): Promise<DeployedCounterContract> => {
-  logger.info('Deploying counter contract...');
-  const counterContract = await deployContract(providers, {
-    compiledContract: counterCompiledContract,
-    privateStateId: 'counterPrivateState',
-    initialPrivateState: privateState,
+  providers: CanaryProviders,
+  commitment: Uint8Array,
+  secret: Uint8Array,
+): Promise<DeployedCanaryContract> => {
+  logger.info('Deploying canary contract...');
+  const canaryContract = await deployContract(providers, {
+    compiledContract: canaryCompiledContract,
+    privateStateId: 'canaryPrivateState',
+    initialPrivateState: createPrivateState(secret),
+    args: [commitment],
   });
-  logger.info(`Deployed contract at address: ${counterContract.deployTxData.public.contractAddress}`);
-  return counterContract;
+  logger.info(`Deployed contract at address: ${canaryContract.deployTxData.public.contractAddress}`);
+  return canaryContract;
 };
 
-export const increment = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
-  logger.info('Incrementing...');
-  const finalizedTxData = await counterContract.callTx.increment();  
+export const claim = async (canaryContract: DeployedCanaryContract): Promise<FinalizedTxData> => {
+  logger.info('Claiming...');
+  const finalizedTxData = await canaryContract.callTx.claim();
 
   return finalizedTxData.public;
 };
 
-export const displayCounterValue = async (
-  providers: CounterProviders,
-  counterContract: DeployedCounterContract,
-): Promise<{ counterValue: bigint | null; contractAddress: string }> => {
-  const contractAddress = counterContract.deployTxData.public.contractAddress;
-  const counterValue = await getCounterLedgerState(providers, contractAddress);
-  if (counterValue === null) {
-    logger.info(`There is no counter contract deployed at ${contractAddress}.`);
+export const displayCanaryStatus = async (
+  providers: CanaryProviders,
+  canaryContract: DeployedCanaryContract,
+): Promise<{ claimed: boolean | null; contractAddress: string }> => {
+  const contractAddress = canaryContract.deployTxData.public.contractAddress;
+  const state = await getCanaryLedgerState(providers, contractAddress);
+  if (state === null) {
+    logger.info(`There is no canary contract deployed at ${contractAddress}.`);
   } else {
-    logger.info(`Current counter value: ${Number(counterValue)}`);
+    logger.info(`Claimed: ${state.claimed}`);
   }
-  return { contractAddress, counterValue };
+  return { contractAddress, claimed: state?.claimed ?? null };
 };
 
 /**
@@ -399,7 +403,7 @@ const registerForDustGeneration = async (
   );
 };
 
-const printWalletSummary = (seed: string, state: any, unshieldedKeystore: UnshieldedKeystore) => {
+const printWalletSummary = (state: any, unshieldedKeystore: UnshieldedKeystore) => {
   const networkId = getNetworkId();
   const unshieldedBalance = state.unshielded.balances[ledger.unshieldedToken().raw] ?? 0n;
 
@@ -414,9 +418,6 @@ const printWalletSummary = (seed: string, state: any, unshieldedKeystore: Unshie
 ${DIV}
   Wallet Overview                            Network: ${networkId}
 ${DIV}
-  Seed: ${seed}
-${DIV}
-
   Shielded (ZSwap)
   └─ Address: ${shieldedAddress}
 
@@ -469,20 +470,23 @@ export const buildWalletAndWaitForFunds = async (config: Config, seed: string): 
     },
   );
 
-  // Show seed and unshielded address immediately so user can fund via faucet while syncing
+  // Recovery material must never be written to logs or terminal output.
   const networkId = getNetworkId();
+  const fundingHint =
+    networkId === 'undeployed'
+      ? '  Local development wallet is pre-funded.'
+      : networkId === 'preview'
+        ? '  Fund this address from the Preview faucet:\n  https://faucet.preview.midnight.network/'
+        : '  Fund this address from the Preprod faucet:\n  https://faucet.preprod.midnight.network/';
   const DIV = '──────────────────────────────────────────────────────────────';
   console.log(`
 ${DIV}
   Wallet Overview                            Network: ${networkId}
 ${DIV}
-  Seed: ${seed}
-
   Unshielded Address (send tNight here):
   ${unshieldedKeystore.getBech32Address()}
 
-  Fund your wallet with tNight from the Preprod faucet:
-  https://faucet.preprod.midnight.network/
+${fundingHint}
 ${DIV}
 `);
 
@@ -490,7 +494,7 @@ ${DIV}
   const syncedState = await withStatus('Syncing with network', () => waitForSync(wallet));
 
   // Display the full wallet summary with all addresses and balances
-  printWalletSummary(seed, syncedState, unshieldedKeystore);
+  printWalletSummary(syncedState, unshieldedKeystore);
 
   // Check if wallet has funds; if not, wait for incoming tokens
   const balance = syncedState.unshielded.balances[ledger.unshieldedToken().raw] ?? 0n;
@@ -510,11 +514,11 @@ export const buildFreshWallet = async (config: Config): Promise<WalletContext> =
 
 export const configureProviders = async (walletContext: WalletContext, config: Config) => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(walletContext);
-  const zkConfigProvider = new NodeZkConfigProvider<CounterCircuits>(contractConfig.zkConfigPath);
+  const zkConfigProvider = new NodeZkConfigProvider<CanaryCircuits>(contractConfig.zkConfigPath);
   return {
     //AES-256-GCM + PBKDF2
     // WalletProvider for encryption uses Encryption Public Key (EPK)
-    privateStateProvider: levelPrivateStateProvider<typeof CounterPrivateStateId>({
+    privateStateProvider: levelPrivateStateProvider<typeof CanaryPrivateStateId>({
       privateStateStoreName: contractConfig.privateStateStoreName,
       signingKeyStoreName: 'signing-keys',
       midnightDbName: 'midnight-level-db',

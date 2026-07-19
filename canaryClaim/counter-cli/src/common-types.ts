@@ -1,26 +1,26 @@
-import { Counter, type CounterPrivateState } from '@eddalabs/counter-contract';
+import { Canary, type CanaryPrivateState } from '@eddalabs/counter-contract';
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import type { DeployedContract, FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
 import type { ImpureCircuitId } from '@midnight-ntwrk/compact-js';
 
-export type CounterCircuits = ImpureCircuitId<Counter.Contract<CounterPrivateState>>;
+export type CanaryCircuits = ImpureCircuitId<Canary.Contract<CanaryPrivateState>>;
 
-export const CounterPrivateStateId = 'counterPrivateState';
+export const CanaryPrivateStateId = 'canaryPrivateState';
 
-export type CounterProviders = MidnightProviders<CounterCircuits, typeof CounterPrivateStateId, CounterPrivateState>;
+export type CanaryProviders = MidnightProviders<CanaryCircuits, typeof CanaryPrivateStateId, CanaryPrivateState>;
 
-export type CounterContract = Counter.Contract<CounterPrivateState>;
+export type CanaryContract = Canary.Contract<CanaryPrivateState>;
 
-export type DeployedCounterContract = DeployedContract<CounterContract> | FoundContract<CounterContract>;
-
-export type UserAction = {
-  increment: string | undefined;  
-};
+export type DeployedCanaryContract = DeployedContract<CanaryContract> | FoundContract<CanaryContract>;
 
 export type DerivedState = {
-  readonly round: Counter.Ledger["round"];
+  readonly claimed: Canary.Ledger["claimed"];
+  readonly winner: Canary.Ledger["winner"];
+  readonly canaryCommitment: Canary.Ledger["canaryCommitment"];
 };
 
 export const emptyState: DerivedState = {
-  round: 0n,
+  claimed: false,
+  winner: new Uint8Array(32),
+  canaryCommitment: new Uint8Array(32),
 };
