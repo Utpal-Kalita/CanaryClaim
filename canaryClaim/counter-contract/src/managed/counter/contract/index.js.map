@@ -2,7 +2,7 @@
   "version": 3,
   "file": "index.js",
   "sourceRoot": "../../../../",
-  "sources": ["src/counter.compact"],
+  "sources": ["src/canary.compact", "compiler/standard-library.compact"],
   "names": [],
-  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAAA;;;;;;;;;;MAQA,AAAA,SAEC;;;;;;;;;;;;;;;;;;;;;;OAAA;;;GACA;EAXD;;;;;;;;;;;;;;;;;;;;;;;;;;IAKA;;;;;;;;;yEAA6B;;;;;;;GAM5B;EAHD,AAAA,YAEC;UADC,KAAK;IAAL;;;;;;;;;;6FAAA,KAAK;;;;wEAAA;;GACN;;;;;;;;;;;;;;;;IALD;qCAAA;;;;;;;;;;;0GAA6B;KAAA;;;;;;;;;;"
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAcA;;;;;;;;;;;;;MAOA,AAAA,YAEC;;OAAA;MAID,AAAA,KAMC;;;;;;;;;;;;;;;;;;;;;;OAAA;;;GAjBA;EAFD;;;;;UAAY,YAAqB;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;IARjC;;;;;;;;;yEAAiD;IACjD;;;;;;;;;yEAA+B;IAC/B;;;;;;;;;yEAAgC;IAO9B;;;;;;;2HAA4B,YAAU;;yEAAtB;;;;;;;GACjB;ECgCD,AAAA,kBAAiC;oEAAA;;;EA+FjC,AAAA;;;;;;;;EDnIA,AAAA,SAA4B;;0DAA5B,MAA4B;;;;;;;;;;;;;;GAAA;EAS5B,AAAA,eAEC,CAFgC,GAAY,kCACV,GAAC,IACnC;EAID,AAAA,QAMC;qDALS;;;;;;;;;;;0HAAO;;UACT,GAAuC;0CAC7B,GAAC;kEAAI;;;;;;;;;;;uIAAgB;;IACrC;;;;;;;;;yEAAO;UACP,KAAM;IAAN;;;;;;;2HAAA,KAAM;;yEAAA;;GACP;;;;;;;;;;;;;;;;;;;;IA3BD;qCAAA;;;;;;;;;;;0GAAiD;KAAA;IACjD;qCAAA;;;;;;;;;;;0GAA+B;KAAA;IAC/B;qCAAA;;;;;;;;;;;0GAAgC;KAAA;;;;;;;;EAahC,AAAA,YAEC;;;;UAFgC,GAAY;;;;;;;;0CAAZ,GAAY;GAE5C;;;;"
 }

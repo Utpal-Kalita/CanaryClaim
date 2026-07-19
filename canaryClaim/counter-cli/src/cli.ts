@@ -1,11 +1,12 @@
-import { type WalletContext } from './api';
+import { type WalletContext } from './api.js';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface, type Interface } from 'node:readline/promises';
 import { type Logger } from 'pino';
 import { type StartedDockerComposeEnvironment, type DockerComposeEnvironment } from 'testcontainers';
-import { type CounterProviders, type DeployedCounterContract } from './common-types';
-import { type Config, UndeployedConfig } from './config';
-import * as api from './api';
+import { type CanaryProviders, type DeployedCanaryContract } from './common-types.js';
+import { type Config, UndeployedConfig } from './config.js';
+import * as api from './api.js';
+import { Canary, secretToBytes } from '@eddalabs/counter-contract';
 
 let logger: Logger;
 
@@ -20,7 +21,7 @@ const GENESIS_MINT_WALLET_SEED = '0000000000000000000000000000000000000000000000
 const BANNER = `
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
-║              Midnight Counter Example                        ║
+║              CanaryClaim                                     ║
 ║              ─────────────────────                           ║
 ║              A privacy-preserving smart contract demo        ║
 ║                                                              ║
@@ -48,20 +49,20 @@ const contractMenu = (dustBalance: string) => `
 ${DIVIDER}
   Contract Actions${dustBalance ? `                    DUST: ${dustBalance}` : ''}
 ${DIVIDER}
-  [1] Deploy a new counter contract
-  [2] Join an existing counter contract
+  [1] Deploy a new canary contract
+  [2] Join an existing canary contract
   [3] Monitor DUST balance
   [4] Exit
 ${'─'.repeat(62)}
 > `;
 
-/** Build the counter actions menu, showing current DUST balance in the header. */
-const counterMenu = (dustBalance: string) => `
+/** Build the canary actions menu, showing current DUST balance in the header. */
+const canaryMenu = (dustBalance: string) => `
 ${DIVIDER}
-  Counter Actions${dustBalance ? `                     DUST: ${dustBalance}` : ''}
+  Canary Actions${dustBalance ? `                      DUST: ${dustBalance}` : ''}
 ${DIVIDER}
-  [1] Increment counter
-  [2] Display current counter value
+  [1] Claim (prove you know the secret)
+  [2] Display claim status
   [3] Exit
 ${'─'.repeat(62)}
 > `;
@@ -132,10 +133,11 @@ const getDustLabel = async (wallet: api.WalletContext['wallet']): Promise<string
   }
 };
 
-/** Prompt for a contract address and join an existing deployed contract. */
-const joinContract = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract> => {
+/** Prompt for a contract address and secret, then join an existing canary contract. */
+const joinContract = async (providers: CanaryProviders, rli: Interface): Promise<DeployedCanaryContract> => {
   const contractAddress = await rli.question('Enter the contract address (hex): ');
-  return await api.joinContract(providers, contractAddress);
+  const secret = await rli.question('Enter the leaked canary secret: ');
+  return await api.joinContract(providers, contractAddress, secretToBytes(secret));
 };
 
 /**
@@ -155,18 +157,21 @@ const startDustMonitor = async (wallet: api.WalletContext['wallet'], rli: Interf
  * Errors during deploy/join are caught and displayed — the user stays in the menu.
  */
 const deployOrJoin = async (
-  providers: CounterProviders,
+  providers: CanaryProviders,
   walletCtx: api.WalletContext,
   rli: Interface,
-): Promise<DeployedCounterContract | null> => {
+): Promise<DeployedCanaryContract | null> => {
   while (true) {
     const dustLabel = await getDustLabel(walletCtx.wallet);
     const choice = await rli.question(contractMenu(dustLabel));
     switch (choice.trim()) {
       case '1':
         try {
-          const contract = await api.withStatus('Deploying counter contract', () =>
-            api.deploy(providers, { privateCounter: 0 }),
+          const secretInput = await rli.question('Enter the canary secret to commit to: ');
+          const secret = secretToBytes(secretInput);
+          const commitment = Canary.pureCircuits.commitmentOf(secret);
+          const contract = await api.withStatus('Deploying canary contract', () =>
+            api.deploy(providers, commitment, secret),
           );
           console.log(`  Contract deployed at: ${contract.deployTxData.public.contractAddress}\n`);
           return contract;
@@ -214,28 +219,28 @@ const deployOrJoin = async (
 
 /**
  * Main interaction loop. Once a contract is deployed/joined, the user
- * can increment the counter or query its current value.
+ * can claim the canary or query its public status.
  */
-const mainLoop = async (providers: CounterProviders, walletCtx: api.WalletContext, rli: Interface): Promise<void> => {
-  const counterContract = await deployOrJoin(providers, walletCtx, rli);
-  if (counterContract === null) {
+const mainLoop = async (providers: CanaryProviders, walletCtx: api.WalletContext, rli: Interface): Promise<void> => {
+  const canaryContract = await deployOrJoin(providers, walletCtx, rli);
+  if (canaryContract === null) {
     return;
   }
 
   while (true) {
     const dustLabel = await getDustLabel(walletCtx.wallet);
-    const choice = await rli.question(counterMenu(dustLabel));
+    const choice = await rli.question(canaryMenu(dustLabel));
     switch (choice.trim()) {
       case '1':
         try {
-          await api.withStatus('Incrementing counter', () => api.increment(counterContract));
+          await api.withStatus('Claiming', () => api.claim(canaryContract));
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
-          console.log(`  ✗ Increment failed: ${msg}\n`);
+          console.log(`  ✗ Claim failed: ${msg}\n`);
         }
         break;
       case '2':
-        await api.displayCounterValue(providers, counterContract);
+        await api.displayCanaryStatus(providers, canaryContract);
         break;
       case '3':
         return;
