@@ -5,4 +5,4 @@
 export * as Canary from "./managed/counter/contract/index.js";
 // Keep these explicit: Vite's dev import analysis does not reliably expose
 // named exports that arrive only through `export *` from a workspace package.
-export { createPrivateState, secretToBytes, witnesses } from "./witnesses.js";
+export { createPrivateState, secretToBytes, witnesses, type CanaryPrivateState } from "./witnesses.js";

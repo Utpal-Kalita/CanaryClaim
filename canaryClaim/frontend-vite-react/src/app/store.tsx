@@ -37,6 +37,7 @@ interface AppState {
   proofStep: number; // -1 idle, 0..3 running/done
   proving: boolean;
   proofError: boolean;
+  demoMode: boolean;
   lastClaim: Claim | null;
 
   claims: Claim[];
@@ -53,6 +54,8 @@ interface AppValue extends AppState {
   pasteCanary: () => void;
   generateProof: () => void;
   resetFlow: () => void;
+  setDemoMode: (enabled: boolean) => void;
+  addMockTransaction: () => void;
   connectWallet: () => void;
   disconnectWallet: () => void;
   secretMatches: boolean;
@@ -70,6 +73,7 @@ const initial: AppState = {
   proofStep: -1,
   proving: false,
   proofError: false,
+  demoMode: true,
   lastClaim: null,
   claims: [],
   wallet: { connected: false, address: null, balance: 0 },
@@ -173,9 +177,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const cur = ref.current;
     const b = cur.selectedBountyId ? cur.bounties.find((x) => x.id === cur.selectedBountyId) : null;
     if (!b || cur.proving || cur.lastClaim) return;
-    // A claim can only be submitted from a connected wallet.
-    if (!cur.wallet.connected) return;
-    if (!cur.capturedSecret || cur.secretInput.trim() !== cur.capturedSecret) {
+    // Real claims require a connected wallet and a matching private witness.
+    if (!cur.demoMode && !cur.wallet.connected) return;
+    if (!cur.demoMode && (!cur.capturedSecret || cur.secretInput.trim() !== cur.capturedSecret)) {
       patch({ proofError: true });
       return;
     }
@@ -183,7 +187,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     schedule(() => patch({ proofStep: 1 }), 600);
     schedule(() => patch({ proofStep: 2 }), 1200);
-    void submitLocalClaim(cur.secretInput.trim())
+    const claimRequest = cur.demoMode
+      ? new Promise<{ transactionId: string }>((resolve) => schedule(
+        () => resolve({ transactionId: `mock-demo-${Date.now().toString(36)}` }), 900,
+      ))
+      : submitLocalClaim(cur.secretInput.trim());
+
+    void claimRequest
       .then((result) => {
         const claim: Claim = {
           id: rid(),
@@ -193,6 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           status: 'verified',
           txRef: result.transactionId,
           date: new Date().toISOString(),
+          isMock: cur.demoMode,
         };
         setS((prev) => ({
           ...prev,
@@ -208,10 +219,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .catch(() => patch({ proving: false, proofStep: -1, proofError: true }));
   }, [patch, schedule]);
 
+  const setDemoMode = useCallback((enabled: boolean) => patch({ demoMode: enabled, proofError: false }), [patch]);
+
   const resetFlow = useCallback(() => {
     const id = ref.current.selectedBountyId;
     if (id) selectBounty(id);
   }, [selectBounty]);
+
+  const addMockTransaction = useCallback(() => {
+    const bounty = ref.current.bounties.find((item) => item.status !== 'claimed') ?? ref.current.bounties[0];
+    if (!bounty) return;
+    const mockClaim: Claim = {
+      id: `demo-${rid()}`,
+      bountyId: bounty.id,
+      bountyName: `${bounty.name} (judge demo)`,
+      amount: bounty.reward,
+      status: 'verified',
+      txRef: `mock-preview-${Date.now().toString(36)}`,
+      date: new Date().toISOString(),
+      isMock: true,
+    };
+    setS((prev) => ({ ...prev, claims: [mockClaim, ...prev.claims] }));
+  }, []);
 
   const connectWallet = useCallback(() => {
     patch({
@@ -238,13 +267,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       pasteCanary,
       generateProof,
       resetFlow,
+      setDemoMode,
+      addMockTransaction,
       connectWallet,
       disconnectWallet,
       secretMatches,
     }),
     [
       s, selectedBounty, selectBounty, sendNormal, sendJailbreak, copyCanary, setSecretInput,
-      pasteCanary, generateProof, resetFlow, connectWallet, disconnectWallet, secretMatches,
+      pasteCanary, generateProof, resetFlow, setDemoMode, addMockTransaction, connectWallet, disconnectWallet, secretMatches,
     ],
   );
 

@@ -57,6 +57,11 @@ try {
       claimed: true,
     })}`,
   );
+  // The Flask bridge waits for this process to exit. Wallet shutdown can keep
+  // its WebSocket alive long after the transaction is confirmed, leaving the
+  // browser stuck at the verification step. This runner is disposable local
+  // demo infrastructure, so exit immediately after flushing the result.
+  process.exit(0);
 } finally {
   if (walletContext) {
     await api.closeWallet(walletContext);

@@ -56,6 +56,8 @@ export interface Claim {
   status: 'verified' | 'pending';
   txRef: string;
   date: string; // ISO
+  /** Demo-only entry; never represents a submitted Midnight transaction. */
+  isMock?: boolean;
 }
 
 export interface WalletState {

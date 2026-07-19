@@ -1,11 +1,11 @@
 import { useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
-import { Check, Coins, Receipt, TrendingUp, ArrowRight, ExternalLink } from 'lucide-react';
+import { Check, Coins, Receipt, TrendingUp, ArrowRight, ExternalLink, FlaskConical } from 'lucide-react';
 import { AppLayout, PageHeader } from '../app-layout';
 import { useApp } from '../store';
 
 export function ClaimsPage() {
-  const { claims } = useApp();
+  const { claims, addMockTransaction } = useApp();
   const navigate = useNavigate();
   const total = claims.reduce((n, c) => n + c.amount, 0);
 
@@ -18,6 +18,15 @@ export function ClaimsPage() {
           <Stat icon={<Coins className="h-4 w-4 text-brand" />} label="Total earned" value={`${total.toLocaleString()} DUST`} />
           <Stat icon={<Receipt className="h-4 w-4 text-brand" />} label="Claims" value={String(claims.length)} />
           <Stat icon={<TrendingUp className="h-4 w-4 text-brand" />} label="Success rate" value={claims.length ? '100%' : '-'} />
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-dashed border-amber-500/40 bg-amber-500/5 p-4">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Judge demo: add a sample workflow entry. This does not contact Midnight, generate a proof, or create a wallet transaction.
+          </p>
+          <button onClick={addMockTransaction} className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-amber-500/40 px-3 py-2 text-xs font-medium text-amber-300 transition-colors hover:bg-amber-500/10">
+            <FlaskConical className="h-3.5 w-3.5" /> Add mock transaction
+          </button>
         </div>
 
         {claims.length === 0 ? (
@@ -46,7 +55,9 @@ export function ClaimsPage() {
                     <Check className="h-4 w-4" />
                   </span>
                   <div>
-                    <p className="text-sm font-medium">{c.bountyName}</p>
+                    <p className="text-sm font-medium">
+                      {c.bountyName}{c.isMock && <span className="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">Mock</span>}
+                    </p>
                     <p className="font-mono text-[11px] text-muted-foreground">
                       {new Date(c.date).toLocaleDateString()} · verified
                     </p>

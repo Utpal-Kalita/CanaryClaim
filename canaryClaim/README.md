@@ -1,123 +1,211 @@
 # CanaryClaim
 
-> Privacy-preserving AI vulnerability disclosures on Midnight.
+> Privacy-preserving AI vulnerability disclosure on Midnight.
 
-CanaryClaim lets a researcher prove that they know a leaked AI canary without publishing the canary itself. The contract verifies the proof and records a claim; the vulnerable AI interaction and canary remain off-chain.
+CanaryClaim is a hackathon prototype for proving an AI vulnerability finding without publishing the exploit prompt or disclosed secret. A researcher proves knowledge of a canary with a Midnight zero-knowledge claim circuit; the chain records the commitment and claim state, not the canary.
 
-## Why Midnight
+## The problem
 
-AI security disclosures create a tension: researchers must prove a finding, while publishing the exploit or secret can make the vulnerability worse. CanaryClaim uses a Midnight Compact contract and a private witness so the researcher proves knowledge of the canary without placing it in a transaction argument or ledger field.
+Responsible AI disclosure needs credible proof without turning a vulnerability report into public exploit instructions. CanaryClaim keeps the canary and exploit off-chain while recording a proof-backed claim.
 
-## Demo status
+## Implementation status
 
-The included local demo is end-to-end verified:
-
-- a local Midnight node, indexer, and proof server run in Docker;
-- the CLI deploys a contract, generates a ZK proof, and submits `claim()`;
-- the contract's public `claimed` state is read back from the indexer;
-- the React UI calls a localhost-only bridge and displays the resulting transaction ID;
-- the header connects to the 1AM browser wallet on Preview for a real wallet session.
-
-Local mode deploys a disposable contract for each test claim and uses the local development wallet. It is a reproducible demo mode, not a production payout system.
-
-## Privacy boundary
-
-| Data | Where it lives | Public? |
+| Capability | Status | Notes |
 | --- | --- | --- |
-| Leaked canary | Researcher's private witness state | No |
+| Compact canary commitment and one-time claim circuit | Implemented | `claim()` verifies a private witness against a public commitment. |
+| Local Midnight deploy, prove, submit, and indexer read-back | Implemented | Runs on the disposable undeployed Docker stack. |
+| Canned vulnerable-AI research UI | Implemented | Deliberately insecure hackathon target; not a production AI system. |
+| UI-to-local-chain bridge | Implemented | Flask bridge is localhost-only. |
+| 1AM Preview wallet connection | Implemented | Wallet approval is required for every transaction. |
+| Preview end-to-end wallet transaction | Not yet demonstrated | The repository never deploys automatically. |
+| Token reward/payout settlement | Not implemented | A verified claim is not a DUST transfer. |
+
+## Real mode vs judge demo mode
+
+The application has two deliberately separate flows.
+
+### Judge demo mode — enabled by default
+
+Judge demo mode makes presentations reliable. Any value advances through the submission workflow and produces a visible entry labeled **Mock** and **not on-chain**.
+
+It does **not** generate a ZK proof, contact Midnight or a wallet, submit a transaction, or transfer a reward.
+
+### Real local ZK mode
+
+Disable **Judge demo mode** on Submit Proof. The UI then requires the captured canary and sends it only to the local bridge at `http://127.0.0.1:5000/claim`.
+
+The bridge runs a disposable local Midnight transaction that:
+
+1. creates a canary commitment;
+2. deploys a fresh contract to the local undeployed network;
+3. generates a ZK proof for `claim()` with the canary as private witness data;
+4. submits the claim with the local development wallet; and
+5. reads `claimed: true` back from the indexer.
+
+This normally takes one to two minutes. Do not run more than one real local claim at once because the disposable local wallet shares DUST coins.
+
+## Privacy model
+
+| Data | Location | Public? |
+| --- | --- | --- |
+| Exploit prompt and AI interaction | Researcher browser / demo target | No |
+| Canary secret | Private witness state | No |
 | Canary commitment | Contract ledger | Yes |
 | Claim status | Contract ledger | Yes |
-| Winner public key | Contract ledger after a successful claim | Yes |
-| ZK proof and transaction metadata | Midnight transaction | Yes; does not reveal the witness |
+| Winner key after a successful claim | Contract ledger | Yes |
+| Proof and transaction metadata | Midnight transaction | Yes; the witness remains private |
 
-The circuit receives no secret argument. It retrieves `secret()` as a witness, hashes it, and asserts that the hash matches the committed canary. Observers can see that the `claim` circuit was called and that a claim succeeded, but cannot recover the witness from the proof.
+The circuit accepts no secret transaction argument. It retrieves the secret from a witness, calculates its commitment, and constrains that result to the stored commitment. Observers can see the successful state transition but cannot recover the witness from the ZK proof.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  R[Researcher browser] -->|jailbreak prompt| AI[Canned vulnerable AI]
-  AI -->|leaked canary, local only| R
-  R -->|secret witness| ZK[Canary Compact circuit]
-  ZK -->|proof + public state transition| M[Midnight local node]
-  M --> I[Indexer]
-  I -->|claimed status| UI[CanaryClaim UI]
-  W[1AM wallet on Preview] -->|wallet session + sponsored fees| UI
-  UI -->|local test only| B[Flask localhost bridge]
-  B -->|headless SDK claim| ZK
+  R[Researcher browser] -->|controlled jailbreak demo| AI[Canned vulnerable AI]
+  AI -->|canary, local UI only| R
+  R -->|real-local mode only| B[Flask localhost bridge]
+  B -->|private witness| C[Canary Compact circuit]
+  C -->|ZK proof + state transition| N[Midnight local node]
+  N --> I[Indexer]
+  I -->|claimed status| R
+  W[1AM Preview wallet] -->|user-approved deploy / claim| R
+  D[Judge demo mode] -->|mock entry only| R
 ```
 
-## Quick start: verified local demo (Windows PowerShell)
+## Repository layout
 
-Prerequisites: Node.js 22+, Docker Desktop, Python 3.11+, and npm.
+```text
+counter-contract/       Compact source, generated assets, witnesses, and tests
+counter-cli/            Headless local wallet, deploy-and-claim runner, Docker config
+frontend-vite-react/    React/Vite UI, judge mode, local bridge client, 1AM integration
+canary-server/          Canned vulnerable AI and localhost-only claim bridge
+docs/                   Judge and video presentation scripts
+```
+
+## Prerequisites
+
+- Node.js 22+
+- npm
+- Docker Desktop
+- Python 3.11+
+- Optional: 1AM browser extension for Preview testing
+
+## Quick start: judge UI demo
 
 ```powershell
 cd C:\Users\Utpal Kalita\CanaryClaim\canaryClaim
 npm install
 npm run build --workspace=@eddalabs/counter-contract
 npm run build --workspace=@eddalabs/counter-cli
-npm run build --workspace=@eddalabs/frontend-vite-react
 
-cd counter-cli
-docker compose -f standalone.yml up -d
-cd ..\..
-python canary-server\server.py
+cd frontend-vite-react
+npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-In a second terminal:
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173). Select a bounty, open **Submit Proof**, enter any value, and run the mock walkthrough. The resulting entry is explicitly non-chain demo data.
+
+## Run the real local ZK claim
+
+### 1. Start the local Midnight stack
+
+```powershell
+cd C:\Users\Utpal Kalita\CanaryClaim\canaryClaim\counter-cli
+docker compose -f standalone.yml up -d
+```
+
+Services:
+
+- Node: `http://127.0.0.1:9944`
+- Indexer: `http://127.0.0.1:8089`
+- Proof server: `http://127.0.0.1:6301`
+
+### 2. Start the bridge
+
+```powershell
+cd C:\Users\Utpal Kalita\CanaryClaim\canary-server
+python server.py
+```
+
+### 3. Start the frontend
 
 ```powershell
 cd C:\Users\Utpal Kalita\CanaryClaim\canaryClaim\frontend-vite-react
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-Open `http://127.0.0.1:5173`, select a bounty, use the jailbreak action, paste the leaked canary, and select **Generate proof**. The UI sends the value only to `http://127.0.0.1:5000/claim`, a localhost bridge that runs the real local Midnight transaction.
+### 4. Submit the proof
 
-### CLI proof check
+1. Select a bounty and use the canned-AI exploit action to capture the demo canary.
+2. Open **Submit Proof**.
+3. Disable **Judge demo mode**.
+4. Paste the captured canary and choose **Generate proof**.
+5. Wait for deployment, proving, submission, and indexer confirmation.
 
-With the Docker stack running:
+### CLI verification
 
 ```powershell
 cd C:\Users\Utpal Kalita\CanaryClaim\canaryClaim\counter-cli
 npm run local-claim -- ACME-RESTRICTED-7749
 ```
 
-Success ends with `LOCAL_CLAIM_RESULT=...` and `claimed: true`.
+Success prints:
 
-## 1AM wallet connection
+```text
+LOCAL_CLAIM_RESULT={"contractAddress":"…","transactionId":"…","blockHeight":"…","claimed":true}
+```
 
-Install and unlock the 1AM browser extension, switch it to **Preview**, then choose **Connect 1AM** in the header. The application uses the Midnight DApp Connector API already bundled in the project and reads wallet configuration dynamically—no network endpoints are hard-coded in the connection flow.
+## 1AM Preview wallet
 
-After revealing the demo canary on the Submit page, use **Deploy Preview campaign** to submit a real contract deployment for approval in 1AM. The resulting address is saved in this browser; **Submit Preview claim** then generates and submits the real claim transaction through the wallet. No transaction is created until you approve it in 1AM.
+1. Install and unlock 1AM.
+2. Select the **Preview** network.
+3. Choose **Connect 1AM** in the app header.
+4. With a genuine captured secret, use the Preview campaign panel to request deployment or claim submission.
+5. Review and approve every action in the wallet.
 
-Preview deployment is deliberately opt-in and has not been performed by this repository. A production release should add a campaign deployment registry and a token settlement circuit before advertising token payouts.
+The app reads configuration through the Midnight DApp Connector API and does not hard-code wallet endpoints. Preview deployment is opt-in; no transaction occurs without the user's wallet approval.
 
-## Testing
+## Development commands
 
 ```powershell
-cd C:\Users\Utpal Kalita\CanaryClaim\canaryClaim
-npm run test-undeployed --workspace=@eddalabs/counter-cli
+npm run build --workspace=@eddalabs/counter-contract
+npm run build --workspace=@eddalabs/counter-cli
 npm run build --workspace=@eddalabs/frontend-vite-react
+npm run test-undeployed --workspace=@eddalabs/counter-cli
 python -m py_compile ..\canary-server\server.py
 ```
 
-## Hackathon demo
+## Judge presentation
 
-Use [DEMO_VIDEO_SCRIPT.md](./docs/DEMO_VIDEO_SCRIPT.md) to record a 75-second submission video. It includes the exact sequence and proof evidence to show.
+- [Judge transparency script](./docs/JUDGE_DEMO_SCRIPT.md)
+- [Demo video script](./docs/DEMO_VIDEO_SCRIPT.md)
 
-## Repository layout
+### Honest demo checklist
 
-```
-counter-contract/       Compact canary commitment and claim circuit
-counter-cli/            Headless local deploy-and-claim runner
-frontend-vite-react/    Researcher UI and 1AM wallet connection
-canary-server/          Canned AI target and localhost claim bridge
-docs/                   Demo script and submission material
-```
+- State clearly that Judge demo mode is mock-only.
+- Show `LOCAL_CLAIM_RESULT` with `claimed:true` as evidence of the real local-chain flow.
+- Do not call mock entries blockchain transactions.
+- Do not claim a token/DUST payout exists.
+- Do not claim a Preview deployment unless a wallet-approved transaction is shown.
 
-## Limitations and next steps
+## Security notes and next steps
 
-- No token payout is implemented yet; successful claims are verified state transitions.
-- Local mode uses a pre-funded development wallet and is not suitable for production.
-- The canary itself must be high entropy; a short or predictable secret could be guessed from its public commitment.
-- A production campaign should use per-campaign salts/nonces, domain-separated commitments, a deployment registry, and a settlement design reviewed for replay and double-claim risks.
+This is a hackathon prototype, not an audited production disclosure platform. A production version should add:
+
+- high-entropy, per-campaign canaries with domain-separated commitments and nonce/salt strategy;
+- campaign registry, lifecycle, policy, and ownership controls;
+- replay-safe and double-claim-resistant settlement;
+- persistent encrypted private-state storage;
+- hardened backend operation, authentication, rate limits, and audit logging;
+- full Preview and production-network testing.
+
+## Limitations
+
+- The canned AI is intentionally vulnerable and exists only to demonstrate the researcher flow.
+- In real local mode, the bridge receives the secret; it must remain localhost-only.
+- Each local test deploys a disposable contract.
+- Verified claims do not pay bounties.
+- The Preview path is wired but still needs a user-approved end-to-end live test.
+
+## License
+
+Apache-2.0 where indicated by package metadata.

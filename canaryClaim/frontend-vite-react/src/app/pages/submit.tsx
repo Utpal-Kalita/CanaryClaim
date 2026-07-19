@@ -15,7 +15,7 @@ const PreviewCampaignPanel = lazy(() =>
 export function SubmitPage() {
   const app = useApp();
   const navigate = useNavigate();
-  const { selectedBounty, secretInput, setSecretInput, pasteCanary, generateProof, proving, proofStep, proofError, secretMatches, capturedSecret, lastClaim, wallet, connectWallet } = app;
+  const { selectedBounty, secretInput, setSecretInput, pasteCanary, generateProof, proving, proofStep, proofError, secretMatches, capturedSecret, lastClaim, wallet, connectWallet, demoMode, setDemoMode } = app;
 
   return (
     <AppLayout>
@@ -38,6 +38,19 @@ export function SubmitPage() {
               <span className="rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand">
                 {selectedBounty.reward} DUST
               </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4">
+              <div>
+                <p className="text-sm font-medium text-amber-200">Judge demo mode</p>
+                <p className="mt-1 text-xs text-muted-foreground">Any value completes a clearly marked mock proof walkthrough. No wallet or Midnight transaction is created.</p>
+              </div>
+              <button
+                onClick={() => setDemoMode(!demoMode)}
+                className={cn('shrink-0 rounded-xl px-3 py-2 text-xs font-medium', demoMode ? 'bg-amber-400 text-black' : 'border border-border bg-secondary/50 text-muted-foreground')}
+              >
+                {demoMode ? 'Demo enabled' : 'Enable demo'}
+              </button>
             </div>
 
             {secretMatches && (
@@ -80,14 +93,14 @@ export function SubmitPage() {
                         That secret doesn’t match the commitment. Capture the real canary first.
                       </motion.p>
                     )}
-                    {secretMatches && !proving && !proofError && (
+                    {(secretMatches || demoMode) && !proving && !proofError && (
                       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 flex items-center gap-1.5 text-xs text-brand">
-                        <Check className="h-3.5 w-3.5" /> Secret matches, ready to prove.
+                        <Check className="h-3.5 w-3.5" /> {demoMode ? 'Demo input accepted, ready to show the workflow.' : 'Secret matches, ready to prove.'}
                       </motion.p>
                     )}
                   </AnimatePresence>
 
-                  {!wallet.connected ? (
+                  {!demoMode && !wallet.connected ? (
                     <div className="mt-4 rounded-xl border border-brand/30 bg-brand/5 p-4">
                       <div className="flex items-center gap-2 text-sm font-medium text-brand">
                         <Wallet className="h-4 w-4" /> Connect a wallet to claim
@@ -141,7 +154,7 @@ export function SubmitPage() {
                   )}
 
                   <p className="mt-4 text-center text-[11px] text-muted-foreground">
-                    Local-test mode sends the secret only to the localhost Midnight bridge, which generates and submits the proof on this machine.
+                    {demoMode ? 'Demo mode creates a visible mock workflow only. Disable it to submit a real local Midnight proof.' : 'Local-test mode sends the secret only to the localhost Midnight bridge, which generates and submits the proof on this machine.'}
                   </p>
                 </motion.div>
               ) : (
@@ -175,7 +188,9 @@ function EmptyState({ onBrowse }: { onBrowse: () => void }) {
 function Success({ onClaims, onBrowse }: { onClaims: () => void; onBrowse: () => void }) {
   const { lastClaim } = useApp();
   if (!lastClaim) return null;
-  const rows = ['Proof verified', 'Claim recorded on Midnight', 'Reward settlement pending'];
+  const rows = lastClaim.isMock
+    ? ['Demo witness accepted', 'Mock transaction recorded in this browser', 'No Midnight transaction or payout created']
+    : ['Proof verified', 'Claim recorded on Midnight', 'Reward settlement pending'];
   return (
     <motion.div key="success" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-card/60 p-6">
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }} className="flex flex-col items-center rounded-2xl border border-brand/30 bg-brand/5 p-6 text-center">
@@ -189,7 +204,7 @@ function Success({ onClaims, onBrowse }: { onClaims: () => void; onBrowse: () =>
           <Wallet className="h-4 w-4 text-brand" />
           <span className="text-lg font-semibold">{lastClaim.amount} DUST bounty</span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">claim verified; token settlement is not enabled in this demo</p>
+        <p className="mt-1 text-xs text-muted-foreground">{lastClaim.isMock ? 'judge demo only; this entry is not a blockchain claim' : 'claim verified; token settlement is not enabled in this demo'}</p>
       </motion.div>
 
       <div className="mt-4 space-y-2">
