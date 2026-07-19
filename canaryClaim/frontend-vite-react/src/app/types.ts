@@ -42,6 +42,8 @@ export interface ChatMessage {
   kind?: 'chat' | 'action' | 'system';
   /** marks the message that reveals the sealed canary */
   canary?: boolean;
+  /** canary extracted from the canned AI response */
+  secret?: string;
   /** optional status for action lines */
   status?: 'ok' | 'warn' | 'run';
 }

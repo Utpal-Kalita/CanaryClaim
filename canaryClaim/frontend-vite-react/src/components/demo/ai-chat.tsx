@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, User, Check, Copy, MessageSquare, Zap } from 'lucide-react';
-import { CANARY_SECRET, useDemo, type ChatMessage } from './demo-context';
+import { useDemo, type ChatMessage } from './demo-context';
 import { PanelShell, PanelHeader } from './panel-shell';
 import { cn } from '@/lib/utils';
 
 export function AiChat() {
-  const { messages, aiTyping, askedNormal, jailbroken, sendNormal, sendJailbreak } = useDemo();
+  const { messages, aiTyping, askedNormal, jailbroken, chatError, sendNormal, sendJailbreak } = useDemo();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,6 +41,9 @@ export function AiChat() {
           ))}
         </AnimatePresence>
         {aiTyping && <TypingIndicator />}
+        {chatError && (
+          <p className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">{chatError}</p>
+        )}
       </div>
 
       {/* Controls */}
@@ -110,7 +113,7 @@ function Bubble({ message }: { message: ChatMessage }) {
               Sealed system canary:
               <br />
               <span className="mt-1 inline-block rounded-md bg-background/60 px-2 py-1 font-mono text-canary">
-                {CANARY_SECRET}
+                {message.secret}
               </span>
             </p>
             <button

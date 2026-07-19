@@ -10,6 +10,7 @@ import {
 import { MOCK_BOUNTIES } from './mock-data';
 import { introFor, probeFor, exploitFor } from './attack-scripts';
 import type { Bounty, ChatMessage, Claim, WalletState } from './types';
+import { CannedAiError, extractCanary, sendCannedAiMessage } from '@/lib/canned-ai';
 
 export const PROOF_STEPS = [
   { key: 'prepare', label: 'Preparing witness', detail: 'Hashing leaked value locally' },
@@ -127,27 +128,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ? ref.current.bounties.find((x) => x.id === ref.current.selectedBountyId)
       : null;
     if (!b || ref.current.askedNormal || ref.current.aiTyping) return;
-    const { prompt, replies } = probeFor(b);
+    const { prompt } = probeFor(b);
     setS((prev) => ({ ...prev, askedNormal: true, aiTyping: true, messages: [...prev.messages, prompt] }));
-    schedule(() => {
-      append(replies);
-      patch({ aiTyping: false });
-    }, 1300);
-  }, [append, patch, schedule]);
+    void sendCannedAiMessage(prompt.text)
+      .then((reply) => append([{ id: rid(), role: 'ai', text: reply, kind: prompt.kind, status: 'ok' }]))
+      .catch((error: unknown) => append([{ id: rid(), role: 'ai', text: error instanceof CannedAiError ? error.message : 'The canned AI request failed.', kind: prompt.kind, status: 'warn' }]))
+      .finally(() => patch({ aiTyping: false }));
+  }, [append, patch]);
 
   const sendJailbreak = useCallback(() => {
     const b = ref.current.selectedBountyId
       ? ref.current.bounties.find((x) => x.id === ref.current.selectedBountyId)
       : null;
     if (!b || ref.current.jailbroken || ref.current.aiTyping) return;
-    const { prompt, buildup, leak } = exploitFor(b);
+    const { prompt } = exploitFor(b);
     setS((prev) => ({ ...prev, jailbroken: true, aiTyping: true, messages: [...prev.messages, prompt] }));
-    schedule(() => append(buildup), 1400);
-    schedule(() => {
-      append([leak]);
-      patch({ aiTyping: false, capturedSecret: b.canary });
-    }, 2900);
-  }, [append, patch, schedule]);
+    void sendCannedAiMessage(prompt.text)
+      .then((reply) => {
+        const secret = extractCanary(reply);
+        append([{ id: rid(), role: 'ai', text: reply, kind: prompt.kind, status: secret ? 'warn' : 'ok', canary: secret !== null, secret: secret ?? undefined }]);
+        patch(secret ? { aiTyping: false, capturedSecret: secret } : { aiTyping: false });
+      })
+      .catch((error: unknown) => {
+        append([{ id: rid(), role: 'ai', text: error instanceof CannedAiError ? error.message : 'The canned AI request failed.', kind: prompt.kind, status: 'warn' }]);
+        patch({ aiTyping: false });
+      });
+  }, [append, patch]);
 
   const copyCanary = useCallback(() => {
     if (ref.current.capturedSecret) navigator.clipboard?.writeText(ref.current.capturedSecret).catch(() => void 0);
@@ -159,15 +165,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [patch]);
 
   const secretMatches = useMemo(
-    () => !!selectedBounty && s.secretInput.trim() === selectedBounty.canary,
-    [selectedBounty, s.secretInput],
+    () => !!s.capturedSecret && s.secretInput.trim() === s.capturedSecret,
+    [s.capturedSecret, s.secretInput],
   );
 
   const generateProof = useCallback(() => {
     const cur = ref.current;
     const b = cur.selectedBountyId ? cur.bounties.find((x) => x.id === cur.selectedBountyId) : null;
     if (!b || cur.proving || cur.lastClaim) return;
-    if (cur.secretInput.trim() !== b.canary) {
+    if (!cur.capturedSecret || cur.secretInput.trim() !== cur.capturedSecret) {
       patch({ proofError: true });
       return;
     }

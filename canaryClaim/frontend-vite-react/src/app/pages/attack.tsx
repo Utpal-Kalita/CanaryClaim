@@ -228,7 +228,7 @@ function Bubble({ message }: { message: ChatMessage }) {
 function CanaryReveal({ message }: { message: ChatMessage }) {
   const { copyCanary } = useApp();
   const [copied, setCopied] = useState(false);
-  const secret = message.text.replace(/^.*?:\s*/, '').replace(/^→\s*/, '');
+  const secret = message.secret ?? message.text.replace(/^.*?:\s*/, '').replace(/^→\s*/, '');
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-brand/40 bg-brand/10 p-3.5">
       <p className="flex items-center gap-1.5 text-xs font-medium text-brand">
