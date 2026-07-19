@@ -23,8 +23,8 @@ export function Logo({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
       <CanaryMark />
-      <span className="text-[15px] font-semibold tracking-tight">
-        Canary<span className="text-muted-foreground">Claim</span>
+      <span className="text-[15px] font-semibold tracking-tight text-white">
+        Canary<span className="text-white/60">Claim</span>
       </span>
     </div>
   );

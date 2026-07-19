@@ -40,7 +40,7 @@ export function LabConsole() {
           <Stat
             icon={<Timer className="h-4 w-4 text-muted-foreground" />}
             label="Time left"
-            value={claimed ? '—' : '2d 14h'}
+            value={claimed ? '-' : '2d 14h'}
           />
           <Stat
             icon={<Lock className="h-4 w-4 text-muted-foreground" />}
@@ -58,7 +58,7 @@ export function LabConsole() {
           </div>
           <p className="mt-2 font-mono text-sm text-foreground">{CAMPAIGN.fingerprint}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Public fingerprint only — the secret itself is sealed.
+            Public fingerprint only, the secret itself is sealed.
           </p>
         </div>
 

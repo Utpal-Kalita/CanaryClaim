@@ -17,7 +17,7 @@ export function ClaimsPage() {
         <div className="mt-6 grid grid-cols-3 gap-3">
           <Stat icon={<Coins className="h-4 w-4 text-brand" />} label="Total earned" value={`${total.toLocaleString()} DUST`} />
           <Stat icon={<Receipt className="h-4 w-4 text-brand" />} label="Claims" value={String(claims.length)} />
-          <Stat icon={<TrendingUp className="h-4 w-4 text-brand" />} label="Success rate" value={claims.length ? '100%' : '—'} />
+          <Stat icon={<TrendingUp className="h-4 w-4 text-brand" />} label="Success rate" value={claims.length ? '100%' : '-'} />
         </div>
 
         {claims.length === 0 ? (

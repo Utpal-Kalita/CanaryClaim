@@ -16,7 +16,7 @@ const CHOICES = [
   {
     icon: Megaphone,
     title: 'Go public',
-    body: 'Publish the vulnerability to force a response — and expose real users in the process.',
+    body: 'Publish the vulnerability to force a response, and expose real users in the process.',
   },
 ];
 
@@ -67,7 +67,7 @@ export function Problem() {
             </div>
             <div className="grid flex-1 gap-8 sm:grid-cols-3">
               {[
-                { who: 'The researcher', fear: 'fears being ignored — or robbed of credit and reward.' },
+                { who: 'The researcher', fear: 'fears being ignored, or robbed of credit and reward.' },
                 { who: 'The AI lab', fear: 'fears paying out for fake or unverifiable claims.' },
                 { who: 'The public', fear: 'risks exposure the moment an exploit is published.' },
               ].map((r, i) => (

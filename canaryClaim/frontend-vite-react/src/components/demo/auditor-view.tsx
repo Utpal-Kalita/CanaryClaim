@@ -45,7 +45,7 @@ export function AuditorView() {
         <div className="rounded-2xl border border-verify/20 bg-verify-soft/40 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-verify">
             <Eye className="h-4 w-4" />
-            Public — verifiable by anyone
+            Public, verifiable by anyone
           </div>
           <ul className="mt-4 space-y-2.5">
             {publicFacts.map((f) => (
@@ -79,7 +79,7 @@ export function AuditorView() {
         <div className="rounded-2xl border border-canary/20 bg-canary-soft/30 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-canary">
             <Lock className="h-4 w-4" />
-            Sealed — never revealed
+            Sealed, never revealed
           </div>
           <ul className="mt-4 space-y-2.5">
             {sealed.map((s) => (

@@ -83,7 +83,7 @@ export function ResearcherConsole() {
                       className="mt-2 flex items-center gap-1.5 text-xs text-verify"
                     >
                       <Check className="h-3.5 w-3.5" />
-                      Secret captured — ready to prove.
+                      Secret captured, ready to prove.
                     </motion.p>
                   )}
                 </AnimatePresence>

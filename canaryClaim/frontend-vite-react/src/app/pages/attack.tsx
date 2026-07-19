@@ -74,7 +74,7 @@ export function AttackPage() {
                 <ShieldCheck className="h-4 w-4" /> Objective
               </div>
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                {meta.blurb} Capture the sealed canary, then submit a proof to claim — the exploit
+                {meta.blurb} Capture the sealed canary, then submit a proof to claim, the exploit
                 never leaves this device.
               </p>
             </div>

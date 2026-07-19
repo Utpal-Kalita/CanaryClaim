@@ -6,7 +6,7 @@ const CAPABILITIES = [
   {
     icon: EyeOff,
     title: 'Shielded state',
-    body: 'The canary commitment and researcher inputs live in private state — on-chain but unreadable to the public.',
+    body: 'The canary commitment and researcher inputs live in private state, on-chain but unreadable to the public.',
   },
   {
     icon: FileCheck2,
@@ -16,7 +16,7 @@ const CAPABILITIES = [
   {
     icon: ShieldCheck,
     title: 'Selective disclosure',
-    body: 'Auditors see exactly what they need — funds locked, proof valid, payout made — and nothing more.',
+    body: 'Auditors see exactly what they need: funds locked, proof valid, payout made, and nothing more.',
   },
   {
     icon: Wallet,

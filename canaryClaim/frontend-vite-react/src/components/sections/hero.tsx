@@ -133,7 +133,7 @@ export function Hero() {
 
           <motion.p variants={fadeUp} className="mt-5 max-w-lg text-pretty text-base leading-relaxed text-white/70">
             The confidential bounty terminal for AI vulnerabilities. Pick a target, extract its
-            sealed canary, prove it locally — get paid in DUST.
+            sealed canary, prove it locally, get paid in DUST.
           </motion.p>
 
           {/* live stats */}

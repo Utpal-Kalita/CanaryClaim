@@ -63,7 +63,7 @@ export function BountiesPage() {
       <div className="px-4 py-8 sm:px-8">
         <PageHeader
           title="Bounties"
-          subtitle="Confidential vulnerability campaigns across every AI attack surface — chatbots, agents, RAG, tools, computer-use and more."
+          subtitle="Confidential vulnerability campaigns across every AI attack surface, chatbots, agents, RAG, tools, computer-use and more."
           right={
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-secondary/40 px-3.5 py-2 text-sm">
               <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} className="accent-brand" />

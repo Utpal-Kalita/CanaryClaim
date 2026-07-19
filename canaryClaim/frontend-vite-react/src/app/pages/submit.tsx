@@ -17,7 +17,7 @@ export function SubmitPage() {
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-8">
         <PageHeader
           title="Submit Proof"
-          subtitle="Generate a zero-knowledge proof that the leaked value matches the sealed commitment — locally."
+          subtitle="Generate a zero-knowledge proof that the leaked value matches the sealed commitment, locally."
         />
 
         {!selectedBounty ? (
@@ -71,7 +71,7 @@ export function SubmitPage() {
                     )}
                     {secretMatches && !proving && !proofError && (
                       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 flex items-center gap-1.5 text-xs text-brand">
-                        <Check className="h-3.5 w-3.5" /> Secret matches — ready to prove.
+                        <Check className="h-3.5 w-3.5" /> Secret matches, ready to prove.
                       </motion.p>
                     )}
                   </AnimatePresence>

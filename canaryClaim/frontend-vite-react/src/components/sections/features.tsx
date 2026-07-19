@@ -20,7 +20,7 @@ const AUDIENCES = [
     tagline: 'Get paid the moment you prove it',
     points: [
       'Prove discovery without disclosing the exploit',
-      'Automatic payout — no negotiation, no ghosting',
+      'Automatic payout, no negotiation, no ghosting',
       'Your identity and methods stay yours',
     ],
   },
@@ -55,7 +55,7 @@ export function Features() {
         </Reveal>
         <Reveal delay={0.1}>
           <Lead className="mt-5">
-            CanaryClaim replaces fragile trust with math. Everyone gets what they need — and nothing
+            CanaryClaim replaces fragile trust with math. Everyone gets what they need, and nothing
             they shouldn’t.
           </Lead>
         </Reveal>

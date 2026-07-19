@@ -22,7 +22,7 @@ export function CtaBand() {
                 <span className="text-gradient">Keep the secret.</span>
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-pretty text-lg text-muted-foreground">
-                CanaryClaim turns confidential discovery into an automatic, verifiable payout — a
+                CanaryClaim turns confidential discovery into an automatic, verifiable payout, a
                 trust move only Midnight makes possible.
               </p>
               <div className="mt-9 flex flex-wrap items-center justify-center gap-3">

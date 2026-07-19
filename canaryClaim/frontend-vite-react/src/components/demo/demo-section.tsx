@@ -83,7 +83,7 @@ export function DemoSection() {
           <Reveal delay={0.1}>
             <Lead className="mx-auto mt-5">
               Jailbreak the model, leak the canary, and generate a proof. Follow the trust move from
-              left to right — the exploit never leaves this browser.
+              left to right, the exploit never leaves this browser.
             </Lead>
           </Reveal>
         </div>

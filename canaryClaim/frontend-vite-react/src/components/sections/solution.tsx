@@ -6,9 +6,9 @@ import { viewportOnce } from '@/lib/motion';
 const STEPS = [
   { icon: KeyRound, title: 'Commit a hidden canary', body: 'Before the challenge opens, the lab seals a secret string inside the AI and commits only its fingerprint on-chain.', tone: 'canary' },
   { icon: Bot, title: 'Researcher attacks the model', body: 'The researcher probes and jailbreaks the AI, entirely on their own machine.', tone: 'brand' },
-  { icon: Bird, title: 'The AI leaks the canary', body: 'A successful exploit makes the model reveal the sealed secret — proof the vulnerability is real.', tone: 'canary' },
+  { icon: Bird, title: 'The AI leaks the canary', body: 'A successful exploit makes the model reveal the sealed secret, proof the vulnerability is real.', tone: 'canary' },
   { icon: Cpu, title: 'Generate a proof locally', body: 'A zero-knowledge proof is built on-device showing the leaked value matches the commitment.', tone: 'brand' },
-  { icon: ShieldCheck, title: 'Midnight verifies', body: 'The network checks the proof — confirming the match without ever seeing the secret or the exploit.', tone: 'verify' },
+  { icon: ShieldCheck, title: 'Midnight verifies', body: 'The network checks the proof, confirming the match without ever seeing the secret or the exploit.', tone: 'verify' },
   { icon: Coins, title: 'Bounty releases automatically', body: 'The smart contract unlocks the escrowed reward and credits the researcher’s wallet.', tone: 'verify' },
   { icon: Lock, title: 'The exploit stays confidential', body: 'The prompt, the leaked data, and the researcher’s identity never leave their device.', tone: 'canary' },
 ] as const;

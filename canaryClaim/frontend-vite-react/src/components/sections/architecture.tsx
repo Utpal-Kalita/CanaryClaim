@@ -39,7 +39,7 @@ const toneMap = {
 };
 
 const DATAFLOW = [
-  { icon: Lock, label: 'Commitment hash', desc: 'public — reveals nothing' },
+  { icon: Lock, label: 'Commitment hash', desc: 'public, reveals nothing' },
   { icon: Cpu, label: 'Zero-knowledge proof', desc: 'generated on-device' },
   { icon: ShieldCheck, label: 'Verification result', desc: 'valid / invalid only' },
 ];
