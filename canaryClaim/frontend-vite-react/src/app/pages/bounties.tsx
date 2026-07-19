@@ -173,7 +173,12 @@ function BountyCard({ bounty: b, index }: { bounty: Bounty; index: number }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.05, 0.4), duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={cn('group flex flex-col rounded-2xl border border-border bg-card/60 p-5 transition-colors', !claimed && 'hover:border-brand/30')}
+      onClick={claimed ? undefined : attack}
+      aria-label={claimed ? undefined : `Attack ${b.name}`}
+      className={cn(
+        'group flex flex-col rounded-2xl border border-border bg-card/60 p-5 transition-colors',
+        !claimed && 'cursor-pointer hover:border-brand/40 hover:bg-card/80',
+      )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -215,11 +220,13 @@ function BountyCard({ bounty: b, index }: { bounty: Bounty; index: number }) {
           {b.fingerprint}
         </span>
         <button
-          onClick={attack}
+          onClick={(e) => { e.stopPropagation(); attack(); }}
           disabled={claimed}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-transform',
-            claimed ? 'cursor-not-allowed bg-secondary text-muted-foreground' : 'bg-white text-black hover:scale-[1.03] active:scale-95',
+            'inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-semibold transition-transform',
+            claimed
+              ? 'cursor-not-allowed bg-secondary text-muted-foreground'
+              : 'bg-brand text-white shadow-[0_0_22px_-4px_var(--brand)] hover:scale-[1.04] active:scale-95',
           )}
         >
           {claimed ? <ShieldCheck className="h-3.5 w-3.5" /> : <Crosshair className="h-3.5 w-3.5" />}

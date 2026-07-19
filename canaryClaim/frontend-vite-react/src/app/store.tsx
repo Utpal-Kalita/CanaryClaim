@@ -173,6 +173,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const cur = ref.current;
     const b = cur.selectedBountyId ? cur.bounties.find((x) => x.id === cur.selectedBountyId) : null;
     if (!b || cur.proving || cur.lastClaim) return;
+    // A claim can only be submitted from a connected wallet.
+    if (!cur.wallet.connected) return;
     if (!cur.capturedSecret || cur.secretInput.trim() !== cur.capturedSecret) {
       patch({ proofError: true });
       return;

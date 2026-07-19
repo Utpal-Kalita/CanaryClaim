@@ -59,7 +59,7 @@ export function Navbar() {
           )}
         >
           <button onClick={() => go('/')} className="pl-1" aria-label="CanaryClaim home">
-            <Logo />
+            <Logo onDark />
           </button>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -75,7 +75,7 @@ export function Navbar() {
               onMouseLeave={() => setCtaHover(false)}
               className="group hidden items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-medium text-black transition-transform hover:scale-[1.03] active:scale-95 sm:inline-flex"
             >
-              <ScrambleText text="Enter app" isHovered={ctaHover} />
+              <ScrambleText text="Browse bounties" isHovered={ctaHover} />
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </button>
             <button

@@ -15,7 +15,7 @@ const PreviewCampaignPanel = lazy(() =>
 export function SubmitPage() {
   const app = useApp();
   const navigate = useNavigate();
-  const { selectedBounty, secretInput, setSecretInput, pasteCanary, generateProof, proving, proofStep, proofError, secretMatches, capturedSecret, lastClaim } = app;
+  const { selectedBounty, secretInput, setSecretInput, pasteCanary, generateProof, proving, proofStep, proofError, secretMatches, capturedSecret, lastClaim, wallet, connectWallet } = app;
 
   return (
     <AppLayout>
@@ -87,20 +87,38 @@ export function SubmitPage() {
                     )}
                   </AnimatePresence>
 
-                  <button
-                    onClick={generateProof}
-                    disabled={proving || !secretInput}
-                    className={cn(
-                      'mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all',
-                      proving ? 'bg-secondary text-muted-foreground' : 'bg-white text-black hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:hover:scale-100',
-                    )}
-                  >
-                    {proving ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Generating proof…</>
-                    ) : (
-                      <><Cpu className="h-4 w-4" /> Generate proof <ArrowRight className="h-3.5 w-3.5" /></>
-                    )}
-                  </button>
+                  {!wallet.connected ? (
+                    <div className="mt-4 rounded-xl border border-brand/30 bg-brand/5 p-4">
+                      <div className="flex items-center gap-2 text-sm font-medium text-brand">
+                        <Wallet className="h-4 w-4" /> Connect a wallet to claim
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        Your {selectedBounty.reward} DUST claim is submitted from a connected wallet. Add one to
+                        generate your proof and claim.
+                      </p>
+                      <button
+                        onClick={connectWallet}
+                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition-transform hover:scale-[1.02] active:scale-95"
+                      >
+                        <Wallet className="h-4 w-4" /> Connect wallet
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={generateProof}
+                      disabled={proving || !secretInput}
+                      className={cn(
+                        'mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all',
+                        proving ? 'bg-secondary text-muted-foreground' : 'bg-white text-black hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:hover:scale-100',
+                      )}
+                    >
+                      {proving ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" /> Generating proof…</>
+                      ) : (
+                        <><Cpu className="h-4 w-4" /> Generate proof <ArrowRight className="h-3.5 w-3.5" /></>
+                      )}
+                    </button>
+                  )}
 
                   {proving && (
                     <div className="mt-4 space-y-2.5 rounded-xl border border-border bg-secondary/30 p-4">

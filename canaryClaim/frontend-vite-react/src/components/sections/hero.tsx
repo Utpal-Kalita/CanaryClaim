@@ -148,7 +148,7 @@ export function Hero() {
               onClick={() => navigate({ to: '/bounties' })}
               className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-medium text-black transition-transform hover:scale-[1.03] active:scale-95"
             >
-              Enter the app
+              Browse bounties
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </button>
             <button
