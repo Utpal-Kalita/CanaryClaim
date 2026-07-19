@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Counter } from '@/pages/counter';
+import { SubmitPage } from '@/app/pages/submit';
 
 export const Route = createFileRoute('/counter')({
-  component: Counter,
+  // The legacy counter template no longer matches the Canary contract.
+  // Keep this URL working by exposing the supported claim flow instead.
+  component: SubmitPage,
 });

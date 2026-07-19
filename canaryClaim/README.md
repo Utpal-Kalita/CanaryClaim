@@ -88,7 +88,9 @@ Success ends with `LOCAL_CLAIM_RESULT=...` and `claimed: true`.
 
 Install and unlock the 1AM browser extension, switch it to **Preview**, then choose **Connect 1AM** in the header. The application uses the Midnight DApp Connector API already bundled in the project and reads wallet configuration dynamically—no network endpoints are hard-coded in the connection flow.
 
-The current wallet connection is intentionally separate from the disposable local proof demo. A production release should add a campaign deployment registry and a token settlement circuit before advertising token payouts.
+After revealing the demo canary on the Submit page, use **Deploy Preview campaign** to submit a real contract deployment for approval in 1AM. The resulting address is saved in this browser; **Submit Preview claim** then generates and submits the real claim transaction through the wallet. No transaction is created until you approve it in 1AM.
+
+Preview deployment is deliberately opt-in and has not been performed by this repository. A production release should add a campaign deployment registry and a token settlement circuit before advertising token payouts.
 
 ## Testing
 
