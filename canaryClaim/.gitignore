@@ -60,6 +60,9 @@ jspm_packages/
 # Turbo
 .turbo
 
+# TanStack Router generator cache
+.tanstack
+
 # Frontend build artifacts (copied from contract source during build)
 frontend-vite-react/public/midnight/
 

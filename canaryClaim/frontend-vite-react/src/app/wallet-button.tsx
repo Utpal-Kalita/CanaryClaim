@@ -59,7 +59,7 @@ export function WalletButton() {
             </div>
             <button
               onClick={() => {
-                navigator.clipboard?.writeText(address).catch(() => void 0);
+                if (address) navigator.clipboard?.writeText(address).catch(() => void 0);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1200);
               }}
