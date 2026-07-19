@@ -10,7 +10,7 @@ import {
 import { MOCK_BOUNTIES } from './mock-data';
 import { introFor, probeFor, exploitFor } from './attack-scripts';
 import type { Bounty, ChatMessage, Claim, WalletState } from './types';
-import { CannedAiError, extractCanary, sendCannedAiMessage } from '@/lib/canned-ai';
+import { CannedAiError, extractCanary, sendCannedAiMessage, submitLocalClaim } from '@/lib/canned-ai';
 
 export const PROOF_STEPS = [
   { key: 'prepare', label: 'Preparing witness', detail: 'Hashing leaked value locally' },
@@ -179,32 +179,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     patch({ proving: true, proofStep: 0, proofError: false });
 
-    const stepMs = [1100, 1500, 1300];
-    let acc = 0;
-    stepMs.forEach((ms, i) => {
-      acc += ms;
-      schedule(() => patch({ proofStep: i + 1 }), acc);
-    });
-    schedule(() => {
-      const claim: Claim = {
-        id: rid(),
-        bountyId: b.id,
-        bountyName: b.name,
-        amount: b.reward,
-        status: 'verified',
-        txRef: 'mdn1qpay0x' + Math.random().toString(16).slice(2, 8) + 'k4z',
-        date: new Date().toISOString(),
-      };
-      setS((prev) => ({
-        ...prev,
-        proving: false,
-        proofStep: 3,
-        lastClaim: claim,
-        claims: [claim, ...prev.claims],
-        wallet: { ...prev.wallet, balance: prev.wallet.balance + b.reward },
-        bounties: prev.bounties.map((x) => (x.id === b.id ? { ...x, status: 'claimed', endsInHours: 0 } : x)),
-      }));
-    }, acc);
+    schedule(() => patch({ proofStep: 1 }), 600);
+    schedule(() => patch({ proofStep: 2 }), 1200);
+    void submitLocalClaim(cur.secretInput.trim())
+      .then((result) => {
+        const claim: Claim = {
+          id: rid(),
+          bountyId: b.id,
+          bountyName: b.name,
+          amount: b.reward,
+          status: 'verified',
+          txRef: result.transactionId,
+          date: new Date().toISOString(),
+        };
+        setS((prev) => ({
+          ...prev,
+          proving: false,
+          proofStep: 3,
+          lastClaim: claim,
+          claims: [claim, ...prev.claims],
+          // Claim verification is real; token payout is intentionally not
+          // represented until a settlement circuit is implemented.
+          bounties: prev.bounties.map((x) => (x.id === b.id ? { ...x, status: 'claimed', endsInHours: 0 } : x)),
+        }));
+      })
+      .catch(() => patch({ proving: false, proofStep: -1, proofError: true }));
   }, [patch, schedule]);
 
   const resetFlow = useCallback(() => {

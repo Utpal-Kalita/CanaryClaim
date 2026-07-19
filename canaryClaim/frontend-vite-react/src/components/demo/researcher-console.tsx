@@ -26,7 +26,7 @@ export function ResearcherConsole() {
         tone="verify"
         eyebrow="Researcher Console"
         title="Claim your bounty"
-        subtitle="Everything below runs on your device"
+        subtitle="Local-test proofs run through the Midnight bridge on this device"
       />
 
       <div className="mt-5 flex-1">
@@ -183,8 +183,8 @@ function StepIcon({ done, active }: { done: boolean; active: boolean }) {
 function SuccessState({ txRef }: { txRef: string | null }) {
   const rows = [
     { label: 'Proof verified', icon: Check },
-    { label: 'Bounty released', icon: Check },
-    { label: 'Wallet credited', icon: Check },
+    { label: 'Claim recorded on Midnight', icon: Check },
+    { label: 'Reward settlement pending', icon: Check },
   ];
   return (
     <motion.div
@@ -211,9 +211,9 @@ function SuccessState({ txRef }: { txRef: string | null }) {
         </div>
         <div className="mt-4 flex items-center gap-2">
           <Wallet className="h-4 w-4 text-verify" />
-          <span className="text-lg font-semibold text-foreground">+500 DUST</span>
+          <span className="text-lg font-semibold text-foreground">500 DUST bounty</span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">credited to your wallet</p>
+        <p className="mt-1 text-xs text-muted-foreground">claim verified; settlement is not enabled in this demo</p>
       </motion.div>
 
       <div className="space-y-2">

@@ -6,6 +6,7 @@ import {
 import { AppLayout, PageHeader } from '../app-layout';
 import { PROOF_STEPS, useApp } from '../store';
 import { cn } from '@/lib/utils';
+import { PreviewCampaignPanel } from '@/components/midnight/preview-campaign-panel';
 
 export function SubmitPage() {
   const app = useApp();
@@ -34,6 +35,8 @@ export function SubmitPage() {
                 {selectedBounty.reward} DUST
               </span>
             </div>
+
+            <PreviewCampaignPanel secret={secretInput} />
 
             <AnimatePresence mode="wait">
               {!lastClaim ? (
@@ -112,7 +115,7 @@ export function SubmitPage() {
                   )}
 
                   <p className="mt-4 text-center text-[11px] text-muted-foreground">
-                    Everything above runs in your browser. The exploit and secret never leave your device.
+                    Local-test mode sends the secret only to the localhost Midnight bridge, which generates and submits the proof on this machine.
                   </p>
                 </motion.div>
               ) : (
@@ -146,7 +149,7 @@ function EmptyState({ onBrowse }: { onBrowse: () => void }) {
 function Success({ onClaims, onBrowse }: { onClaims: () => void; onBrowse: () => void }) {
   const { lastClaim } = useApp();
   if (!lastClaim) return null;
-  const rows = ['Proof verified', 'Bounty released', 'Wallet credited'];
+  const rows = ['Proof verified', 'Claim recorded on Midnight', 'Reward settlement pending'];
   return (
     <motion.div key="success" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-card/60 p-6">
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }} className="flex flex-col items-center rounded-2xl border border-brand/30 bg-brand/5 p-6 text-center">
@@ -158,9 +161,9 @@ function Success({ onClaims, onBrowse }: { onClaims: () => void; onBrowse: () =>
         </div>
         <div className="mt-4 flex items-center gap-2">
           <Wallet className="h-4 w-4 text-brand" />
-          <span className="text-lg font-semibold">+{lastClaim.amount} DUST</span>
+          <span className="text-lg font-semibold">{lastClaim.amount} DUST bounty</span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">credited to your wallet</p>
+        <p className="mt-1 text-xs text-muted-foreground">claim verified; token settlement is not enabled in this demo</p>
       </motion.div>
 
       <div className="mt-4 space-y-2">

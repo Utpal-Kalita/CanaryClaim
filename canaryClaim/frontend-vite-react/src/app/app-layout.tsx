@@ -80,7 +80,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="mt-auto rounded-2xl border border-border bg-card/50 p-4">
             <p className="text-xs font-medium">Confidential by design</p>
             <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-              Proofs are generated on your device. Exploits never leave your machine.
+              The witness stays private. Local demo proofs use a localhost-only bridge; 1AM connects on Preview.
             </p>
           </div>
         </aside>

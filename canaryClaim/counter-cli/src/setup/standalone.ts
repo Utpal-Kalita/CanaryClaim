@@ -6,7 +6,7 @@ import { TestEnvironment } from '../test/simulators/simulator';
 import 'dotenv/config';
 import { sendArbitraryUnshieldedToken, sendUnshieldedToken } from '../test/utils/wallet-transfers';
 
-const logDir = path.resolve(currentDir, '..', 'logs', 'setup-undeployed', `${new Date().toISOString()}.log`);
+const logDir = path.resolve(currentDir, '..', 'logs', 'setup-undeployed', `${new Date().toISOString().replace(/:/g, '-')}.log`);
 const logger = await createLogger(logDir);
 
 async function setupStandalone() {

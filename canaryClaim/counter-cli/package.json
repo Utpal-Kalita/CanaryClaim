@@ -24,7 +24,8 @@
     "setup-undeployed": "docker compose -f standalone.yml up -d && for attempt in $(seq 1 60); do if curl -fsS http://127.0.0.1:6300/version >/dev/null; then exit 0; fi; sleep 5; done; echo 'Proof server did not become ready within 5 minutes.' >&2; exit 1",
     "ps-undeployed": "docker compose -f ps-undeployed.yml up",
     "ps-preview": "docker compose -f ps-preview.yml up",               
-    "build": "rm -rf dist && tsc --project tsconfig.build.json",
+    "build": "node ./scripts/build.mjs",
+    "local-claim": "npm run prepare-tui && node dist/local-claim.js",
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "indexer-client-testing": "vitest run src/test/indexer-client.test.ts"

@@ -1,97 +1,121 @@
-# 🚀 EDDA - Midnight Starter Template
-- A starter template for building on Midnight Network with React frontend and smart contract integration.
-- **[Live Demo → counter.nebula.builders](https://counter.nebula.builders)**
+# CanaryClaim
 
-## 📦 Prerequisites
+> Privacy-preserving AI vulnerability disclosures on Midnight.
 
-- [Node.js](https://nodejs.org/) (v23+) & [npm](https://www.npmjs.com/) (v11+)
-- [Docker](https://docs.docker.com/get-docker/)
-- [Git LFS](https://git-lfs.com/) (for large files)
-- [Compact](https://docs.midnight.network/relnotes/compact-tools) (Midnight developer tools)
-- [Lace](https://chromewebstore.google.com/detail/hgeekaiplokcnmakghbdfbgnlfheichg?utm_source=item-share-cb) (Browser wallet extension)
-- [Faucet](https://faucet.preview.midnight.network/) (Preview Network Faucet)
+CanaryClaim lets a researcher prove that they know a leaked AI canary without publishing the canary itself. The contract verifies the proof and records a claim; the vulnerable AI interaction and canary remain off-chain.
 
-## Known Issues
+## Why Midnight
 
-- There’s a not-yet-fixed bug in the arm64 Docker image of the proof server.
-- Workaround: Use Bricktower proof server. **bricktowers/proof-server:6.1.0-alpha.6**
+AI security disclosures create a tension: researchers must prove a finding, while publishing the exploit or secret can make the vulnerability worse. CanaryClaim uses a Midnight Compact contract and a private witness so the researcher proves knowledge of the canary without placing it in a transaction argument or ledger field.
 
-## 🛠️ Setup
+## Demo status
 
-### 1️⃣ Install Git LFS
+The included local demo is end-to-end verified:
 
-```bash
-# Install and initialize Git LFS
-sudo dnf install git-lfs  # For Fedora/RHEL
-git lfs install
+- a local Midnight node, indexer, and proof server run in Docker;
+- the CLI deploys a contract, generates a ZK proof, and submits `claim()`;
+- the contract's public `claimed` state is read back from the indexer;
+- the React UI calls a localhost-only bridge and displays the resulting transaction ID;
+- the header connects to the 1AM browser wallet on Preview for a real wallet session.
+
+Local mode deploys a disposable contract for each test claim and uses the local development wallet. It is a reproducible demo mode, not a production payout system.
+
+## Privacy boundary
+
+| Data | Where it lives | Public? |
+| --- | --- | --- |
+| Leaked canary | Researcher's private witness state | No |
+| Canary commitment | Contract ledger | Yes |
+| Claim status | Contract ledger | Yes |
+| Winner public key | Contract ledger after a successful claim | Yes |
+| ZK proof and transaction metadata | Midnight transaction | Yes; does not reveal the witness |
+
+The circuit receives no secret argument. It retrieves `secret()` as a witness, hashes it, and asserts that the hash matches the committed canary. Observers can see that the `claim` circuit was called and that a claim succeeded, but cannot recover the witness from the proof.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  R[Researcher browser] -->|jailbreak prompt| AI[Canned vulnerable AI]
+  AI -->|leaked canary, local only| R
+  R -->|secret witness| ZK[Canary Compact circuit]
+  ZK -->|proof + public state transition| M[Midnight local node]
+  M --> I[Indexer]
+  I -->|claimed status| UI[CanaryClaim UI]
+  W[1AM wallet on Preview] -->|wallet session + sponsored fees| UI
+  UI -->|local test only| B[Flask localhost bridge]
+  B -->|headless SDK claim| ZK
 ```
 
-### 2️⃣ Install Compact Tools
+## Quick start: verified local demo (Windows PowerShell)
 
-```bash
-# Install the latest Compact tools
-curl --proto '=https' --tlsv1.2 -LsSf \
-  https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
-```
-```bash
-# Install the latest compiler
-# Compact compiler version 0.27 should be downloaded manually. Compact tools does not support it currently. 
-compact update +0.27.0
-```
+Prerequisites: Node.js 22+, Docker Desktop, Python 3.11+, and npm.
 
-### 3️⃣ Install Node.js and docker
-- [Node.js](https://nodejs.org/) & [npm](https://www.npmjs.com/)
-- [Docker](https://docs.docker.com/get-docker/)
+```powershell
+cd C:\Users\Utpal Kalita\CanaryClaim\canaryClaim
+npm install
+npm run build --workspace=@eddalabs/counter-contract
+npm run build --workspace=@eddalabs/counter-cli
+npm run build --workspace=@eddalabs/frontend-vite-react
 
-### 4️⃣ Verify Installation
-```bash
-# Check versions
-node -v  
-npm -v   
-docker -v
-git lfs version
-compact check  # Should show latest version
+cd counter-cli
+docker compose -f standalone.yml up -d
+cd ..\..
+python canary-server\server.py
 ```
 
-## 📁 Project Structure
+In a second terminal:
+
+```powershell
+cd C:\Users\Utpal Kalita\CanaryClaim\canaryClaim\frontend-vite-react
+npm run dev -- --host 127.0.0.1 --port 5173
+```
+
+Open `http://127.0.0.1:5173`, select a bounty, use the jailbreak action, paste the leaked canary, and select **Generate proof**. The UI sends the value only to `http://127.0.0.1:5000/claim`, a localhost bridge that runs the real local Midnight transaction.
+
+### CLI proof check
+
+With the Docker stack running:
+
+```powershell
+cd C:\Users\Utpal Kalita\CanaryClaim\canaryClaim\counter-cli
+npm run local-claim -- ACME-RESTRICTED-7749
+```
+
+Success ends with `LOCAL_CLAIM_RESULT=...` and `claimed: true`.
+
+## 1AM wallet connection
+
+Install and unlock the 1AM browser extension, switch it to **Preview**, then choose **Connect 1AM** in the header. The application uses the Midnight DApp Connector API already bundled in the project and reads wallet configuration dynamically—no network endpoints are hard-coded in the connection flow.
+
+The current wallet connection is intentionally separate from the disposable local proof demo. A production release should add a campaign deployment registry and a token settlement circuit before advertising token payouts.
+
+## Testing
+
+```powershell
+cd C:\Users\Utpal Kalita\CanaryClaim\canaryClaim
+npm run test-undeployed --workspace=@eddalabs/counter-cli
+npm run build --workspace=@eddalabs/frontend-vite-react
+python -m py_compile ..\canary-server\server.py
+```
+
+## Hackathon demo
+
+Use [DEMO_VIDEO_SCRIPT.md](./docs/DEMO_VIDEO_SCRIPT.md) to record a 75-second submission video. It includes the exact sequence and proof evidence to show.
+
+## Repository layout
 
 ```
-├── counter-cli/         # CLI tools
-├── counter-contract/    # Smart contracts
-└── frontend-vite-react/ # React application
+counter-contract/       Compact canary commitment and claim circuit
+counter-cli/            Headless local deploy-and-claim runner
+frontend-vite-react/    Researcher UI and 1AM wallet connection
+canary-server/          Canned AI target and localhost claim bridge
+docs/                   Demo script and submission material
 ```
 
-## 🔗 Setup Instructions
+## Limitations and next steps
 
-### Install Project Dependencies and compile contracts
-  ```bash
-   # In one terminal (from project root)
-   npm install
-   npm run build
-   ```
-
-### Setup Env variables
-
-1. **Create .env file from template under counter-cli folder**
-   - [`counter-cli/.env_template`](./counter-cli/.env_template)
-
-2. **Create .env file from template under frontend-vite-react folder**
-   - [`frontend-vite-react/.env_template`](./frontend-vite-react/.env_template)
-
-### Start Development In Preview Network or
-   ```bash   
-   # In one terminal (from project root)
-   npm run dev:frontend
-   ```
-
-### Start Development In Undeployed Network
-   ```bash   
-   # In one terminal (from project root)
-   npm run setup-standalone
-   
-   # In another terminal (from project root)
-   npm run dev:frontend
-   ```
----
-
-<div align="center"><p>Built with ❤️ by <a href="https://eddalabs.io">Edda Labs</a></p></div>
+- No token payout is implemented yet; successful claims are verified state transitions.
+- Local mode uses a pre-funded development wallet and is not suitable for production.
+- The canary itself must be high entropy; a short or predictable secret could be guessed from its public commitment.
+- A production campaign should use per-campaign salts/nonces, domain-separated commitments, a deployment registry, and a settlement design reviewed for replay and double-claim risks.

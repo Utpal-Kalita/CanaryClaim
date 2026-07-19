@@ -13,8 +13,12 @@
 # ============================================================
 
 import hashlib
+import json
 import os
 import random
+import subprocess
+import threading
+from pathlib import Path
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -45,6 +49,15 @@ EXPLOIT_KEYWORDS = [
 
 app = Flask(__name__)
 CORS(app)
+
+# The real Midnight integration is intentionally exposed only by the local
+# development server.  It serializes claims because the local test wallet and
+# its DUST coins cannot safely fund concurrent transactions.
+claim_lock = threading.Lock()
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+LOCAL_CLAIM_RUNNER = PROJECT_ROOT / "canaryClaim" / "counter-cli" / "dist" / "local-claim.js"
+LOCAL_CLAIM_WORKDIR = LOCAL_CLAIM_RUNNER.parent.parent
+LOCAL_CLAIM_RESULT = "LOCAL_CLAIM_RESULT="
 
 
 @app.route("/health", methods=["GET"])
@@ -92,6 +105,53 @@ def check():
         "real_hash": real_hash,
         "guess_hash": guess_hash,
     })
+
+
+@app.route("/claim", methods=["POST"])
+def claim():
+    """Run one real local Midnight deploy-and-claim transaction for the UI demo.
+
+    This endpoint is for the disposable undeployed Docker stack only.  The
+    secret is passed directly to the local Node process and is never logged or
+    included in the JSON response.
+    """
+    data = request.get_json(force=True)
+    secret = data.get("secret", "") if isinstance(data, dict) else ""
+
+    if not isinstance(secret, str) or not secret or len(secret.encode("utf-8")) > 32:
+        return jsonify({"error": "A canary secret between 1 and 32 UTF-8 bytes is required."}), 400
+
+    if not LOCAL_CLAIM_RUNNER.is_file():
+        return jsonify({"error": "Local claim runner is not built. Run npm run local-claim once from counter-cli."}), 503
+
+    with claim_lock:
+        try:
+            completed = subprocess.run(
+                ["node", str(LOCAL_CLAIM_RUNNER), secret],
+                cwd=LOCAL_CLAIM_WORKDIR,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=300,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return jsonify({"error": "The local Midnight proof transaction timed out."}), 504
+
+    for line in reversed(completed.stdout.splitlines()):
+        if line.startswith(LOCAL_CLAIM_RESULT):
+            try:
+                result = json.loads(line[len(LOCAL_CLAIM_RESULT):])
+            except ValueError:
+                break
+            if completed.returncode == 0 and result.get("claimed") is True:
+                return jsonify(result)
+
+    return jsonify({
+        "error": "The local Midnight claim did not complete.",
+        "details": completed.stderr[-1000:] if DEBUG else None,
+    }), 502
 
 
 if __name__ == "__main__":

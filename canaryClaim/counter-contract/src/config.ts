@@ -1,12 +1,14 @@
 import path from 'node:path';
-export const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
+import { fileURLToPath } from 'node:url';
+
+export const currentDir = path.dirname(fileURLToPath(import.meta.url));
 
 export interface Config {
   readonly logDir: string;  
 }
 
 export class LogicTestingConfig implements Config {
-  logDir = path.resolve(currentDir, '..', 'logs', 'logic-testing', `${new Date().toISOString()}.log`);  
+  logDir = path.resolve(currentDir, '..', 'logs', 'logic-testing', `${new Date().toISOString().replace(/:/g, '-')}.log`);  
   constructor() {}
 }
 

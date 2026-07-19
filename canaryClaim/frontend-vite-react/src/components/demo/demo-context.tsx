@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { CannedAiError, extractCanary, sendCannedAiMessage } from '@/lib/canned-ai';
+import { CannedAiError, extractCanary, sendCannedAiMessage, submitLocalClaim } from '@/lib/canned-ai';
 
 export type Phase = 'idle' | 'leaked' | 'proving' | 'settled';
 
@@ -157,12 +157,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       return;
     }
     patch({ phase: 'proving', proofStep: 0, proofError: false });
-    let elapsed = 0;
-    [1200, 1600, 1400].forEach((ms, index) => {
-      elapsed += ms;
-      schedule(() => patch({ proofStep: index + 1 }), elapsed);
-    });
-    schedule(() => patch({ phase: 'settled', proofStep: 3, txRef: `mdn1qpay0x${Math.random().toString(16).slice(2, 8)}k4z` }), elapsed);
+    schedule(() => patch({ proofStep: 1 }), 600);
+    schedule(() => patch({ proofStep: 2 }), 1200);
+    void submitLocalClaim(current.secretInput.trim())
+      .then((result) => patch({ phase: 'settled', proofStep: 3, txRef: result.transactionId }))
+      .catch(() => patch({ phase: 'leaked', proofStep: -1, proofError: true }));
   }, [patch, schedule]);
 
   const reset = useCallback(() => {
