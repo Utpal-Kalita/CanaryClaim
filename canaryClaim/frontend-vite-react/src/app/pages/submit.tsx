@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight, ClipboardPaste, Cpu, Loader2, Check, AlertCircle, Wallet, Crosshair,
@@ -6,7 +7,10 @@ import {
 import { AppLayout, PageHeader } from '../app-layout';
 import { PROOF_STEPS, useApp } from '../store';
 import { cn } from '@/lib/utils';
-import { PreviewCampaignPanel } from '@/components/midnight/preview-campaign-panel';
+
+const PreviewCampaignPanel = lazy(() =>
+  import('@/components/midnight/preview-campaign-panel').then((module) => ({ default: module.PreviewCampaignPanel })),
+);
 
 export function SubmitPage() {
   const app = useApp();
@@ -36,7 +40,11 @@ export function SubmitPage() {
               </span>
             </div>
 
-            <PreviewCampaignPanel secret={secretInput} />
+            {secretMatches && (
+              <Suspense fallback={<div className="h-24 animate-pulse rounded-2xl border border-border bg-card/40" />}>
+                <PreviewCampaignPanel secret={secretInput} />
+              </Suspense>
+            )}
 
             <AnimatePresence mode="wait">
               {!lastClaim ? (

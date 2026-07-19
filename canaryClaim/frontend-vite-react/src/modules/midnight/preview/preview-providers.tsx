@@ -6,7 +6,7 @@ import { useWallet } from '../wallet-widget/hooks/useWallet';
 import { CachedFetchZkConfigProvider } from '../wallet-widget/utils/providersWrappers/zkConfigProvider';
 import { noopProofClient, proofClient } from '../wallet-widget/utils/providersWrappers/proofClient';
 import { inMemoryPrivateStateProvider } from '../wallet-widget/utils/customImplementations/in-memory-private-state-provider';
-import { Canary, type CanaryPrivateState } from '@eddalabs/counter-contract';
+import { type CanaryPrivateState } from '@eddalabs/counter-contract';
 
 type PreviewContextValue = { providers?: unknown };
 const PreviewCanaryContext = createContext<PreviewContextValue>({});

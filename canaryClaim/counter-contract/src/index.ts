@@ -3,4 +3,6 @@
 // public/midnight/counter asset path) keeps working. The logic inside is
 // CanaryClaim, exported here as `Canary`.
 export * as Canary from "./managed/counter/contract/index.js";
-export * from "./witnesses.js";
+// Keep these explicit: Vite's dev import analysis does not reliably expose
+// named exports that arrive only through `export *` from a workspace package.
+export { createPrivateState, secretToBytes, witnesses } from "./witnesses.js";

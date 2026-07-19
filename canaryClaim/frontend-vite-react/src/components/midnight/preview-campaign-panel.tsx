@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Check, Loader2, Rocket, ShieldCheck } from 'lucide-react';
-import { usePreviewCanaryProviders } from '@/modules/midnight/preview/preview-providers';
+import { PreviewCanaryProvider, usePreviewCanaryProviders } from '@/modules/midnight/preview/preview-providers';
 import { useWallet } from '@/modules/midnight/wallet-widget/hooks/useWallet';
 import { claimPreviewCampaign, deployPreviewCampaign } from '@/lib/preview-canary';
 
 const storageKey = 'canaryclaim-preview-campaign-address';
 
-export function PreviewCampaignPanel({ secret }: { secret: string }) {
+function PreviewCampaignControls({ secret }: { secret: string }) {
   const { providers } = usePreviewCanaryProviders();
   const { connectedAPI, status } = useWallet();
   const [address, setAddress] = useState('');
@@ -100,5 +100,14 @@ export function PreviewCampaignPanel({ secret }: { secret: string }) {
 
       {message && <p className="mt-3 break-all rounded-lg border border-border bg-background/50 p-3 font-mono text-[11px] text-muted-foreground">{message}</p>}
     </section>
+  );
+}
+
+/** Loaded only on the Preview claim screen, keeping the main app bundle lightweight. */
+export function PreviewCampaignPanel({ secret }: { secret: string }) {
+  return (
+    <PreviewCanaryProvider>
+      <PreviewCampaignControls secret={secret} />
+    </PreviewCanaryProvider>
   );
 }
