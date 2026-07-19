@@ -28,7 +28,10 @@ export default defineConfig(({ mode }) => ({
     }),
     wasm(),
     react(),
-    viteCommonjs(),
+    // Exclude Spline from the CJS rewriter: its runtime has shader-builder
+    // method calls named `require(...)` (e.g. e.require("irradiance")) that this
+    // plugin otherwise mis-rewrites into broken `import from "irradiance"`.
+    viteCommonjs({ exclude: ['@splinetool'] }),
     topLevelAwait(),
     tailwindcss(),
   ],
